@@ -1,34 +1,26 @@
 services:
-  ollama:
-    volumes:
-      - ollama:/root/.ollama
-    container_name: ollama
-    pull_policy: always
-    tty: true
-    restart: unless-stopped
-    image: ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
-
-  open-webui:
-    build:
-      context: .
-      args:
-        OLLAMA_BASE_URL: '/ollama'
-      dockerfile: Dockerfile
-    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
-    container_name: open-webui
-    volumes:
-      - open-webui:/app/backend/data
-    depends_on:
-      - ollama
+  mirchibada-ai:
+    build: .
+    container_name: mirchibada-ai
     ports:
-      - ${OPEN_WEBUI_PORT-3000}:8080
+      - "3000:8080"
+    volumes:
+      - mirchibada-data:/app/backend/data
     environment:
-      - 'OLLAMA_BASE_URL=http://ollama:11434'
-      - 'WEBUI_SECRET_KEY='
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    restart: unless-stopped
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WEBUI_JWT_SECRET=${JWT_SECRET}
+      - WEBUI_NAME=Mirchibada AI
+      - WEBUI_AUTH=true
+      - SCARF_NO_ANALYTICS=true
+      - DO_NOT_TRACK=true
+      - ANONYMIZED_TELEMETRY=false
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  ollama: {}
-  open-webui: {}
+  mirchibada-data:
+    name: mirchibada-data
